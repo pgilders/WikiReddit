@@ -10,6 +10,7 @@ from unicodedata import category
 import time
 import pickle
 import os
+import datetime
 
 # Assume 'posts' DataFrame is already loaded, containing a 'body' column.
 # posts = pd.read_hdf('data/posts.h5').reset_index(drop=True)
@@ -41,9 +42,6 @@ from unicodedata import category
 import time
 import pickle
 import os
-
-# Assume 'posts' DataFrame is already loaded, containing a 'body' column.
-# posts = pd.read_hdf('data/posts.h5').reset_index(drop=True)
 
 HEADERS = {'user-agent': 'wikireddit p.gildersleve@exeter.ac.uk'}
 MAX_CONCURRENCY = 100
@@ -117,7 +115,8 @@ def extract_links_from_text(text):
     html = markdown.markdown(text, extensions=['extra'])
     soup = BeautifulSoup(html, 'html.parser')
     a_tags = soup.find_all('a', href=True)
-    markdown_links = [a['href'].strip() for a in a_tags]
+    markdown_links = [y.strip().replace(' ', '_') for a in a_tags for y in re.split(r'(?<=\s[^\w\s])|(?<=[^\w\s])\s', a['href'].strip())]
+    markdown_links = [y for x in markdown_links for y in extract_plain_links(x)]
 
     # Remove these <a> tags to avoid double counting
     for a_tag in a_tags:
@@ -443,7 +442,7 @@ async def process_comments():
     commentlinks = []
 
     for batch in range(0, len(comments), size):
-        print(f"Batch {batch // size + 1}", size)
+        print(f"Batch {batch // size + 1}", size, datetime.datetime.now())
         try:
             commentlinks.append(pd.read_hdf(f'data/commentlinks_batches.h5', key=f'/batch_{batch // size + 1}'))
         except (FileNotFoundError, KeyError) as ex:
@@ -451,7 +450,7 @@ async def process_comments():
             while True:
                 try:
                     links_df = await get_links_df(comments.iloc[batch:batch + size].copy(), column='body')
-                    MAX_CONCURRENCY = min(200, int(MAX_CONCURRENCY * (2 ** 0.5)))
+                    MAX_CONCURRENCY = min(200, int(round(MAX_CONCURRENCY * (2 ** 0.6), 0)))
                     break
                 except MemoryError as ex:
                     print(ex)
