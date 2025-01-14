@@ -67,13 +67,13 @@ async def collect_topics():
         grouptopics = grouptopics.pivot(index='article', columns='topic', values='score').reset_index().rename_axis(None, axis=1)
         grouptopics['lang'] = lang
         grouptopics = grouptopics.set_index(['lang', 'article'])
+        grouptopics.to_hdf('data/lang_topics_df.h5', key=f'/{lang}', append=True)
         l_topics_df.append(grouptopics)
         
         await wtsession.close()
 
-    l_topics_df = pd.concat(l_topics_df, ignore_index=True)
-    l_topics_df.to_hdf('data/topics_df.h5', key='df')
-
+    l_topics_df = pd.concat(l_topics_df)
+    l_topics_df.to_hdf('data/topics_df_2.h5', key='df')
 
 
 
