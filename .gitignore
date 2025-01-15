@@ -4,4 +4,8 @@ test.ipynb
 .env
 test.ipynb
 wikireddit.db
-
+test2.ipynb
+wikireddit_sample.db
+wikireddit_final_notopics.db
+manuscript
+.DS_Store
